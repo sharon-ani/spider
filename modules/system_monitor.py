@@ -119,29 +119,36 @@ def get_network_interfaces():
 def save_snapshot(app):
     """Save a system snapshot to DB (called by background thread)."""
     with app.app_context():
-        stats = get_system_stats()
-        snap = SystemSnapshot(
-            cpu_percent=stats['cpu_percent'],
-            ram_percent=stats['ram_percent'],
-            ram_used_gb=stats['ram_used_gb'],
-            ram_total_gb=stats['ram_total_gb'],
-            disk_percent=stats['disk_percent'],
-            disk_used_gb=stats['disk_used_gb'],
-            disk_total_gb=stats['disk_total_gb'],
-            net_bytes_sent=stats['net_bytes_sent'],
-            net_bytes_recv=stats['net_bytes_recv'],
-            net_sent_mb=stats['net_sent_mb'],
-            net_recv_mb=stats['net_recv_mb'],
-            load_avg_1=stats['load_avg_1'],
-            load_avg_5=stats['load_avg_5'],
-            load_avg_15=stats['load_avg_15'],
-        )
-        db.session.add(snap)
-        db.session.commit()
-        # Keep only last 200 snapshots
-        count = SystemSnapshot.query.count()
-        if count > 200:
-            oldest = SystemSnapshot.query.order_by(SystemSnapshot.timestamp.asc()).limit(count - 200).all()
-            for o in oldest:
-                db.session.delete(o)
+        try:
+            stats = get_system_stats()
+            snap = SystemSnapshot(
+                cpu_percent=stats['cpu_percent'],
+                ram_percent=stats['ram_percent'],
+                ram_used_gb=stats['ram_used_gb'],
+                ram_total_gb=stats['ram_total_gb'],
+                disk_percent=stats['disk_percent'],
+                disk_used_gb=stats['disk_used_gb'],
+                disk_total_gb=stats['disk_total_gb'],
+                net_bytes_sent=stats['net_bytes_sent'],
+                net_bytes_recv=stats['net_bytes_recv'],
+                net_sent_mb=stats['net_sent_mb'],
+                net_recv_mb=stats['net_recv_mb'],
+                load_avg_1=stats['load_avg_1'],
+                load_avg_5=stats['load_avg_5'],
+                load_avg_15=stats['load_avg_15'],
+            )
+            db.session.add(snap)
             db.session.commit()
+            # Keep only last 200 snapshots
+            count = SystemSnapshot.query.count()
+            if count > 200:
+                oldest = SystemSnapshot.query.order_by(
+                    SystemSnapshot.timestamp.asc()
+                ).limit(count - 200).all()
+                for o in oldest:
+                    db.session.delete(o)
+                db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            db.session.remove()
+            print(f"[!] Snapshot error (recovered): {e}")
