@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page-header" data-aos="fade-down">
+  <div class="page-title"><i class="fas fa-server"></i><span class="font-cyber">SYSTEM MONITOR</span></div>
+  <div class="live-indicator"><div class="live-dot"></div> LIVE METRICS</div>
+</div>
+
+<!-- Gauges Row -->
+<div class="stats-grid stagger" data-aos="fade-up" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+
+  <div class="stat-card blue">
+    <div class="corner-glow"></div>
+    <div class="stat-icon"><i class="fas fa-microchip"></i></div>
+    <div class="stat-label">CPU Usage</div>
+    <div class="stat-value" id="sysCpuVal">—</div>
+    <div class="progress-cyber mt-2"><div class="progress-fill blue" id="cpuBar" style="width:0%"></div></div>
+    <div class="stat-sub mt-1" id="sysCpuFreq">—</div>
+  </div>
+
+  <div class="stat-card purple">
+    <div class="corner-glow"></div>
+    <div class="stat-icon"><i class="fas fa-memory"></i></div>
+    <div class="stat-label">RAM Usage</div>
+    <div class="stat-value" id="sysRamVal">—</div>
+    <div class="progress-cyber mt-2"><div class="progress-fill purple" id="ramBar" style="width:0%"></div></div>
+    <div class="stat-sub mt-1" id="sysRamDetail">—</div>
+  </div>
+
+  <div class="stat-card green">
+    <div class="corner-glow"></div>
+    <div class="stat-icon"><i class="fas fa-hdd"></i></div>
+    <div class="stat-label">Disk Usage</div>
+    <div class="stat-value" id="sysDiskVal">—</div>
+    <div class="progress-cyber mt-2"><div class="progress-fill green" id="diskBar" style="width:0%"></div></div>
+    <div class="stat-sub mt-1" id="sysDiskDetail">—</div>
+  </div>
+
+  <div class="stat-card orange">
+    <div class="corner-glow"></div>
+    <div class="stat-icon"><i class="fas fa-clock"></i></div>
+    <div class="stat-label">System Uptime</div>
+    <div class="stat-value" style="font-size:1.3rem" id="sysUptimeVal">—</div>
+    <div class="stat-sub mt-2" id="sysHostname">—</div>
+  </div>
+
+  <div class="stat-card pink">
+    <div class="corner-glow"></div>
+    <div class="stat-icon"><i class="fas fa-upload"></i></div>
+    <div class="stat-label">Network Out</div>
+    <div class="stat-value" id="sysNetOut">—</div>
+    <div class="stat-sub">MB total sent</div>
+  </div>
+
+  <div class="stat-card red">
+    <div class="corner-glow"></div>
+    <div class="stat-icon"><i class="fas fa-download"></i></div>
+    <div class="stat-label">Network In</div>
+    <div class="stat-value" id="sysNetIn">—</div>
+    <div class="stat-sub">MB total received</div>
+  </div>
+
+</div>
+
+<!-- Charts Row -->
+<div class="content-grid" data-aos="fade-up" data-aos-delay="100">
+  <div class="glass-card">
+    <div class="section-title mb-3"><i class="fas fa-chart-area"></i> CPU & RAM History</div>
+    <div class="chart-wrap" style="height:220px;"><canvas id="sysChart"></canvas></div>
+  </div>
+  <div class="glass-card">
+    <div class="section-title mb-3"><i class="fas fa-exchange-alt"></i> Network Throughput</div>
+    <div class="chart-wrap" style="height:220px;"><canvas id="netChart"></canvas></div>
+  </div>
+</div>
+
+<!-- Info + Processes -->
+<div class="content-grid" data-aos="fade-up" data-aos-delay="150">
+
+  <!-- System Info -->
+  <div class="glass-card">
+    <div class="section-title mb-3"><i class="fas fa-info-circle"></i> System Information</div>
+    <table class="table-cyber">
+      <tbody id="sysInfoTable">
+        <tr><td colspan="2" style="text-align:center;padding:20px;color:var(--muted);"><div class="spinner-cyber" style="margin:0 auto;"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Top Processes -->
+  <div class="glass-card">
+    <div class="section-title mb-3"><i class="fas fa-list"></i> Top Processes by CPU</div>
+    <div class="scroll-box" style="max-height:280px;">
+      <table class="table-cyber" id="procTable">
+        <thead><tr><th>PID</th><th>Name</th><th>CPU%</th><th>MEM%</th><th>Status</th></tr></thead>
+        <tbody id="procBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Load Average -->
+<div class="glass-card" data-aos="fade-up" data-aos-delay="200">
+  <div class="section-title mb-3"><i class="fas fa-balance-scale"></i> Load Averages</div>
+  <div class="d-flex gap-3" style="flex-wrap:wrap;">
+    <div style="flex:1;min-width:140px;padding:16px;background:rgba(0,217,255,0.05);border:1px solid var(--border);border-radius:var(--radius);text-align:center;">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">1 MIN</div>
+      <div style="font-family:var(--font-cyber);font-size:1.8rem;color:var(--cyber-blue)" id="load1">—</div>
+    </div>
+    <div style="flex:1;min-width:140px;padding:16px;background:rgba(138,43,226,0.05);border:1px solid var(--border);border-radius:var(--radius);text-align:center;">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">5 MIN</div>
+      <div style="font-family:var(--font-cyber);font-size:1.8rem;color:var(--purple)" id="load5">—</div>
+    </div>
+    <div style="flex:1;min-width:140px;padding:16px;background:rgba(0,255,136,0.05);border:1px solid var(--border);border-radius:var(--radius);text-align:center;">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">15 MIN</div>
+      <div style="font-family:var(--font-cyber);font-size:1.8rem;color:var(--neon-green)" id="load15">—</div>
+    </div>
+    <div style="flex:1;min-width:140px;padding:16px;background:rgba(255,107,0,0.05);border:1px solid var(--border);border-radius:var(--radius);text-align:center;">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">CPU CORES</div>
+      <div style="font-family:var(--font-cyber);font-size:1.8rem;color:var(--orange)" id="cpuCount">—</div>
+    </div>
+    <div style="flex:1;min-width:140px;padding:16px;background:rgba(255,0,127,0.05);border:1px solid var(--border);border-radius:var(--radius);text-align:center;">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">PROCESSES</div>
+      <div style="font-family:var(--font-cyber);font-size:1.8rem;color:var(--pink)" id="procCount">—</div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+async function loadSystem() {
+  const d = await SPIDER.fetchJSON('/api/system');
+  if (!d) return;
+  const s = d.current;
+
+  // Stat cards
+  const set = (id, v) => { const e = document.getElementById(id); if(e) e.textContent = v; };
+  const bar = (id, v) => { const e = document.getElementById(id); if(e) { e.style.width = Math.min(100, v)+'%'; e.className = 'progress-fill ' + (v>85?'red':v>65?'orange':'green'); } };
+
+  set('sysCpuVal',    s.cpu_percent + '%');
+  set('sysRamVal',    s.ram_percent + '%');
+  set('sysDiskVal',   s.disk_percent + '%');
+  set('sysUptimeVal', s.uptime_str);
+  set('sysNetOut',    s.net_sent_mb.toFixed(1));
+  set('sysNetIn',     s.net_recv_mb.toFixed(1));
+  set('sysCpuFreq',   s.cpu_freq ? s.cpu_freq + ' MHz' : '');
+  set('sysRamDetail', `${s.ram_used_gb} / ${s.ram_total_gb} GB`);
+  set('sysDiskDetail',`${s.disk_used_gb} / ${s.disk_total_gb} GB`);
+  set('sysHostname',  s.hostname || '');
+  set('load1',   s.load_avg_1);
+  set('load5',   s.load_avg_5);
+  set('load15',  s.load_avg_15);
+  set('cpuCount',s.cpu_count);
+  set('procCount',s.processes);
+
+  bar('cpuBar',  s.cpu_percent);
+  bar('ramBar',  s.ram_percent);
+  bar('diskBar', s.disk_percent);
+
+  // System info table
+  const info = [
+    ['Platform',     s.platform],
+    ['Hostname',     s.hostname],
+    ['CPU Cores',    s.cpu_count],
+    ['CPU Frequency',s.cpu_freq ? s.cpu_freq + ' MHz' : 'N/A'],
+    ['Total RAM',    s.ram_total_gb + ' GB'],
+    ['Total Disk',   s.disk_total_gb + ' GB'],
+    ['Processes',    s.processes],
+    ['Uptime',       s.uptime_str],
+  ];
+  document.getElementById('sysInfoTable').innerHTML = info.map(([k,v]) => `
+    <tr>
+      <td style="color:var(--muted);font-size:12px;width:40%"><i class="fas fa-angle-right" style="color:var(--cyber-blue);margin-right:6px;"></i>${k}</td>
+      <td style="font-family:var(--font-mono);font-size:12px;color:var(--white)">${v||'N/A'}</td>
+    </tr>
+  `).join('');
+
+  // Charts
+  if (d.history) {
+    SpiderCharts.initSystemChart('sysChart', d.history.timestamps, d.history.cpu, d.history.ram);
+    SpiderCharts.initNetworkChart('netChart', d.history.timestamps, d.history.net_in, d.history.net_out);
+  }
+}
+
+(async () => {
+  await loadSystem();
+  setInterval(loadSystem, 5000);
+})();
+</script>
+{% endblock %}

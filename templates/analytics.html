@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page-header" data-aos="fade-down">
+  <div class="page-title"><i class="fas fa-chart-line"></i><span class="font-cyber">ANALYTICS</span></div>
+  <div class="d-flex align-center gap-2">
+    <a href="/reports" class="btn-cyber btn-cyber-green fs-12"><i class="fas fa-file-export"></i> Export Report</a>
+  </div>
+</div>
+
+<!-- Period Selector -->
+<div class="glass-card mb-4" data-aos="fade-up">
+  <div class="d-flex align-center gap-3" style="flex-wrap:wrap;">
+    <span style="color:var(--muted);font-size:12px;font-weight:600;">VIEW PERIOD:</span>
+    <button class="btn-cyber btn-cyber-primary period-btn" data-period="hourly" onclick="switchPeriod('hourly')"><i class="fas fa-clock"></i> 24 Hours</button>
+    <button class="btn-cyber btn-cyber-outline period-btn" data-period="daily" onclick="switchPeriod('daily')"><i class="fas fa-calendar-day"></i> 30 Days</button>
+    <button class="btn-cyber btn-cyber-outline period-btn" data-period="weekly" onclick="switchPeriod('weekly')"><i class="fas fa-calendar-week"></i> 12 Weeks</button>
+    <div style="margin-left:auto;font-size:11px;color:var(--muted)" id="analyticsTS"></div>
+  </div>
+</div>
+
+<!-- Main Attack Timeline -->
+<div class="glass-card mb-4" data-aos="fade-up" data-aos-delay="50">
+  <div class="section-header">
+    <div class="section-title"><i class="fas fa-chart-area"></i> Attack Timeline</div>
+    <div class="d-flex gap-2 fs-12">
+      <span style="color:var(--red)">● Failed</span>
+      <span style="color:var(--neon-green)">● Success</span>
+    </div>
+  </div>
+  <div class="chart-wrap" style="height:240px;"><canvas id="timelineChart"></canvas></div>
+</div>
+
+<!-- Country + Event Types Row -->
+<div class="content-grid" data-aos="fade-up" data-aos-delay="100">
+  <div class="glass-card">
+    <div class="section-title mb-3"><i class="fas fa-globe"></i> Country Distribution</div>
+    <div class="chart-wrap" style="height:280px;"><canvas id="analyticsCountryChart"></canvas></div>
+  </div>
+  <div class="glass-card">
+    <div class="section-title mb-3"><i class="fas fa-tags"></i> Event Types Breakdown</div>
+    <div class="chart-wrap" style="height:280px;"><canvas id="eventTypePieChart"></canvas></div>
+  </div>
+</div>
+
+<!-- Username Targeting + Top IPs -->
+<div class="content-grid" data-aos="fade-up" data-aos-delay="150">
+  <div class="glass-card">
+    <div class="section-title mb-3"><i class="fas fa-crosshairs"></i> Username Targeting (Top 10)</div>
+    <div class="chart-wrap" style="height:300px;"><canvas id="usernameBarChart"></canvas></div>
+  </div>
+  <div class="glass-card">
+    <div class="section-title mb-3"><i class="fas fa-fire"></i> Threat Rankings</div>
+    <div id="threatRankWrap" class="scroll-box" style="max-height:310px;"></div>
+  </div>
+</div>
+
+<!-- Daily Bar -->
+<div class="glass-card" data-aos="fade-up" data-aos-delay="200">
+  <div class="section-title mb-3"><i class="fas fa-calendar-alt"></i> Daily Attack Volume (30 Days)</div>
+  <div class="chart-wrap" style="height:200px;"><canvas id="dailyBarChart"></canvas></div>
+</div>
+
+<!-- Attack Heatmap -->
+<div class="glass-card" data-aos="fade-up" data-aos-delay="250">
+  <div class="section-header">
+    <div class="section-title"><i class="fas fa-th"></i> Attack Heatmap — Hour of Day × Day of Week</div>
+  </div>
+  <div id="heatmapWrap" style="overflow-x:auto;padding-bottom:8px;"></div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+let analyticsData = null;
+let currentPeriod = 'hourly';
+
+async function loadAnalytics() {
+  analyticsData = await SPIDER.fetchJSON('/api/analytics');
+  if (!analyticsData) return;
+
+  document.getElementById('analyticsTS').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+
+  // Charts
+  SpiderCharts.initAttackTimeline('timelineChart', analyticsData.hourly || []);
+  SpiderCharts.initCountryChart('analyticsCountryChart', analyticsData.top_countries || []);
+  SpiderCharts.initEventTypePie('eventTypePieChart', analyticsData.event_types || []);
+  SpiderCharts.initUsernameChart('usernameBarChart', analyticsData.top_usernames || []);
+  SpiderCharts.initDailyChart('dailyBarChart', analyticsData.daily || []);
+
+  renderThreatRankings(analyticsData.top_ips || []);
+  renderHeatmap(analyticsData.heatmap || []);
+}
+
+function switchPeriod(period) {
+  currentPeriod = period;
+  document.querySelectorAll('.period-btn').forEach(b => {
+    b.className = b.dataset.period === period
+      ? 'btn-cyber btn-cyber-primary period-btn'
+      : 'btn-cyber btn-cyber-outline period-btn';
+  });
+  if (!analyticsData) return;
+  const dataMap = { hourly: analyticsData.hourly, daily: analyticsData.daily, weekly: analyticsData.weekly };
+  SpiderCharts.initAttackTimeline('timelineChart', dataMap[period] || []);
+}
+
+function renderThreatRankings(ips) {
+  const wrap = document.getElementById('threatRankWrap');
+  if (!ips.length) { wrap.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px;">No data</p>'; return; }
+  const max = ips[0].count;
+  wrap.innerHTML = ips.map((ip, i) => `
+    <div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+      <div class="d-flex justify-between align-center mb-1">
+        <div class="d-flex align-center gap-2">
+          <span style="font-family:var(--font-cyber);font-size:1rem;color:${i===0?'var(--red)':i===1?'var(--orange)':i===2?'var(--yellow)':'var(--muted)'};">#${i+1}</span>
+          <span class="ip-badge">${ip.ip}</span>
+        </div>
+        <span style="color:var(--red);font-family:var(--font-mono);font-weight:700;">${ip.count.toLocaleString()}</span>
+      </div>
+      <div class="d-flex justify-between fs-11" style="color:var(--muted);margin-bottom:4px;">
+        <span>${SPIDER.flagEmoji(ip.country_code)} ${ip.country}</span>
+      </div>
+      <div class="progress-cyber">
+        <div class="progress-fill red" style="width:${(ip.count/max*100).toFixed(0)}%"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderHeatmap(data) {
+  const wrap = document.getElementById('heatmapWrap');
+  if (!data.length) { wrap.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px;">No heatmap data</p>'; return; }
+
+  // Build 7 days x 24 hours matrix
+  const matrix = Array.from({length:7}, () => Array(24).fill(0));
+  let max = 0;
+  data.forEach(d => {
+    if (d.day >= 0 && d.day < 7 && d.hour >= 0 && d.hour < 24) {
+      matrix[d.day][d.hour] = d.count;
+      if (d.count > max) max = d.count;
+    }
+  });
+
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const hours = Array.from({length:24}, (_,i) => i);
+
+  let html = `<table style="border-collapse:collapse;font-size:10px;font-family:var(--font-mono);">`;
+  // Header row (hours)
+  html += '<tr><td style="padding:4px 8px;color:var(--muted);"></td>';
+  hours.forEach(h => html += `<td style="padding:2px 4px;color:var(--muted);text-align:center;">${String(h).padStart(2,'0')}</td>`);
+  html += '</tr>';
+  // Data rows
+  days.forEach((day, di) => {
+    html += `<tr><td style="padding:4px 8px;color:var(--muted);white-space:nowrap;">${day}</td>`;
+    hours.forEach(h => {
+      const val = matrix[di][h];
+      const intensity = max > 0 ? val/max : 0;
+      const alpha = (0.08 + intensity * 0.9).toFixed(2);
+      const color = intensity > 0.7 ? `rgba(255,34,68,${alpha})` : intensity > 0.4 ? `rgba(255,107,0,${alpha})` : `rgba(0,217,255,${alpha})`;
+      html += `<td style="padding:2px 4px;" title="${day} ${String(h).padStart(2,'0')}:00 — ${val} attacks">
+        <div style="width:22px;height:18px;background:${color};border-radius:2px;"></div>
+      </td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</table>';
+
+  // Legend
+  html += `<div style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:11px;color:var(--muted);">
+    <span>Low</span>
+    <div style="display:flex;gap:2px;">
+      ${[0.1,0.3,0.5,0.7,0.9].map(i => `<div style="width:20px;height:12px;background:rgba(0,217,255,${(0.08+i*0.9).toFixed(2)});border-radius:2px;"></div>`).join('')}
+    </div>
+    <span>High</span>
+  </div>`;
+
+  wrap.innerHTML = html;
+}
+
+(async () => { await loadAnalytics(); })();
+</script>
+{% endblock %}

@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page-header" data-aos="fade-down">
+  <div class="page-title"><i class="fas fa-file-alt"></i><span class="font-cyber">REPORTS</span></div>
+</div>
+
+<div class="content-grid" data-aos="fade-up">
+
+  <!-- Generate Reports -->
+  <div class="glass-card">
+    <div class="section-title mb-4"><i class="fas fa-file-export"></i> Generate Reports</div>
+
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+      <!-- CSV Export -->
+      <div style="padding:16px;background:rgba(0,217,255,0.04);border:1px solid var(--border);border-radius:var(--radius);">
+        <div class="d-flex justify-between align-center mb-3">
+          <div>
+            <div style="font-weight:700;color:var(--white);">CSV Export</div>
+            <div style="font-size:12px;color:var(--muted);">All SSH attack data as spreadsheet</div>
+          </div>
+          <i class="fas fa-file-csv" style="font-size:1.5rem;color:var(--neon-green);"></i>
+        </div>
+        <div class="d-flex align-center gap-2" style="flex-wrap:wrap;">
+          <select class="input-cyber" id="csvDays" style="max-width:140px;">
+            <option value="1">Last 24h</option>
+            <option value="7" selected>Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="90">Last 90 days</option>
+          </select>
+          <a id="csvBtn" href="/reports/export/csv?days=7" class="btn-cyber btn-cyber-green" onclick="updateCsvLink()">
+            <i class="fas fa-download"></i> Download CSV
+          </a>
+        </div>
+      </div>
+
+      <!-- JSON Export -->
+      <div style="padding:16px;background:rgba(138,43,226,0.04);border:1px solid var(--border);border-radius:var(--radius);">
+        <div class="d-flex justify-between align-center mb-3">
+          <div>
+            <div style="font-weight:700;color:var(--white);">JSON Export</div>
+            <div style="font-size:12px;color:var(--muted);">Machine-readable structured data</div>
+          </div>
+          <i class="fas fa-code" style="font-size:1.5rem;color:var(--purple);"></i>
+        </div>
+        <div class="d-flex align-center gap-2" style="flex-wrap:wrap;">
+          <select class="input-cyber" id="jsonDays" style="max-width:140px;">
+            <option value="1">Last 24h</option>
+            <option value="7" selected>Last 7 days</option>
+            <option value="30">Last 30 days</option>
+          </select>
+          <a id="jsonBtn" href="/reports/export/json?days=7" class="btn-cyber btn-cyber-outline" onclick="updateJsonLink()">
+            <i class="fas fa-download"></i> Download JSON
+          </a>
+        </div>
+      </div>
+
+      <!-- PDF Report (Coming Soon) -->
+      <div style="padding:16px;background:rgba(255,107,0,0.04);border:1px solid var(--border);border-radius:var(--radius);opacity:0.7;">
+        <div class="d-flex justify-between align-center mb-3">
+          <div>
+            <div style="font-weight:700;color:var(--white);">PDF Report <span class="badge-cyber badge-warning" style="font-size:10px;">Coming Soon</span></div>
+            <div style="font-size:12px;color:var(--muted);">Formatted incident report with charts</div>
+          </div>
+          <i class="fas fa-file-pdf" style="font-size:1.5rem;color:var(--orange);"></i>
+        </div>
+        <button class="btn-cyber" style="background:rgba(255,255,255,0.05);color:var(--muted);cursor:not-allowed;" disabled>
+          <i class="fas fa-lock"></i> Phase 6 — Roadmap
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Summary -->
+  <div class="glass-card">
+    <div class="section-title mb-4"><i class="fas fa-chart-bar"></i> Report Summary</div>
+    <div id="reportSummary">
+      <div style="text-align:center;padding:30px;color:var(--muted);"><div class="spinner-cyber" style="margin:0 auto 10px;"></div>Loading statistics...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Phase Roadmap -->
+<div class="glass-card" data-aos="fade-up" data-aos-delay="100">
+  <div class="section-title mb-4"><i class="fas fa-road"></i> SPIDER Development Roadmap</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+    {% set phases = [
+      ('Phase 1', 'Flask Setup & Dashboard UI', 'fa-check-circle', 'green', 'Complete'),
+      ('Phase 2', 'SSH Log Monitoring', 'fa-check-circle', 'green', 'Complete'),
+      ('Phase 3', 'GeoIP Intelligence', 'fa-check-circle', 'green', 'Complete'),
+      ('Phase 4', 'Cowrie Honeypot', 'fa-spinner', 'blue', 'In Progress'),
+      ('Phase 5', 'WhatsApp / Telegram Alerts', 'fa-spinner', 'blue', 'In Progress'),
+      ('Phase 6', 'Analytics & Reporting', 'fa-spinner', 'blue', 'In Progress'),
+      ('Phase 7', 'AI Threat Intelligence', 'fa-clock', 'muted', 'Planned'),
+    ] %}
+    {% for phase, desc, icon, color, status in phases %}
+    <div style="padding:14px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius);">
+      <div class="d-flex align-center gap-2 mb-2">
+        <i class="fas {{ icon }}" style="color:var(--{{ 'neon-green' if color=='green' else 'cyber-blue' if color=='blue' else 'muted' }});"></i>
+        <span style="font-family:var(--font-cyber);font-size:11px;color:var(--{{ 'neon-green' if color=='green' else 'cyber-blue' if color=='blue' else 'muted' }});">{{ phase }}</span>
+      </div>
+      <div style="font-size:12px;color:var(--white);margin-bottom:4px;">{{ desc }}</div>
+      <span class="badge-cyber {{ 'badge-success' if color=='green' else 'badge-info' if color=='blue' else 'badge-warning' }}" style="font-size:10px;">{{ status }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+function updateCsvLink() {
+  const days = document.getElementById('csvDays').value;
+  document.getElementById('csvBtn').href = `/reports/export/csv?days=${days}`;
+}
+function updateJsonLink() {
+  const days = document.getElementById('jsonDays').value;
+  document.getElementById('jsonBtn').href = `/reports/export/json?days=${days}`;
+}
+document.getElementById('csvDays').addEventListener('change', () => {
+  document.getElementById('csvBtn').href = `/reports/export/csv?days=${document.getElementById('csvDays').value}`;
+});
+document.getElementById('jsonDays').addEventListener('change', () => {
+  document.getElementById('jsonBtn').href = `/reports/export/json?days=${document.getElementById('jsonDays').value}`;
+});
+
+(async () => {
+  const stats = await SPIDER.fetchJSON('/api/stats');
+  if (!stats) return;
+  const s = stats;
+  const wrap = document.getElementById('reportSummary');
+  const rows = [
+    ['Total SSH Attempts', s.total_attempts?.toLocaleString(), 'var(--cyber-blue)', 'fa-network-wired'],
+    ['Failed Logins', s.failed_logins?.toLocaleString(), 'var(--red)', 'fa-times-circle'],
+    ['Successful Logins', s.success_logins?.toLocaleString(), 'var(--neon-green)', 'fa-check-circle'],
+    ['Brute Force Attacks', s.brute_force_attacks?.toLocaleString(), 'var(--orange)', 'fa-bolt'],
+    ['Root Login Attempts', s.root_attempts?.toLocaleString(), 'var(--purple)', 'fa-user-shield'],
+    ['Active Threats', s.active_threats?.toLocaleString(), 'var(--red)', 'fa-skull'],
+    ['Last 24h Attacks', s.last_24h?.toLocaleString(), 'var(--pink)', 'fa-clock'],
+  ];
+  wrap.innerHTML = rows.map(([label, val, color, icon]) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+      <span style="font-size:12px;color:var(--muted);"><i class="fas ${icon}" style="color:${color};margin-right:8px;width:14px;text-align:center;"></i>${label}</span>
+      <span style="font-family:var(--font-cyber);color:${color};font-size:1rem;">${val||'—'}</span>
+    </div>
+  `).join('') + `<div style="margin-top:12px;font-size:11px;color:var(--muted);">Report generated: ${new Date().toLocaleString()}</div>`;
+})();
+</script>
+{% endblock %}

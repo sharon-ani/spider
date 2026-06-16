@@ -1,0 +1,304 @@
+/* =============================================================
+   SPIDER — animations.css
+   Keyframes, special effects, cyber animations
+   ============================================================= */
+
+/* ── Matrix Rain (canvas overlay) ── */
+#matrix-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.03;
+}
+
+/* ── Scan Line Effect ── */
+.scanline {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cyber-blue), transparent);
+  z-index: 9998;
+  animation: scanMove 4s linear infinite;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+@keyframes scanMove {
+  from { top: 0; }
+  to   { top: 100vh; }
+}
+
+/* ── Glitch Text ── */
+.glitch {
+  position: relative;
+  animation: glitch 3s infinite;
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+
+.glitch::before {
+  color: var(--pink);
+  animation: glitch-clip1 3s infinite;
+  clip-path: polygon(0 0, 100% 0, 100% 30%, 0 30%);
+  transform: translateX(-3px);
+}
+
+.glitch::after {
+  color: var(--cyber-blue);
+  animation: glitch-clip2 3s infinite;
+  clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%);
+  transform: translateX(3px);
+}
+
+@keyframes glitch {
+  0%, 90%, 100% { transform: translate(0); }
+  92% { transform: translate(-2px, 1px); }
+  94% { transform: translate(2px, -1px); }
+  96% { transform: translate(-1px, 2px); }
+}
+
+@keyframes glitch-clip1 {
+  0%, 100% { clip-path: polygon(0 0, 100% 0, 100% 30%, 0 30%); opacity: 0; }
+  92%, 96%  { clip-path: polygon(0 10%, 100% 10%, 100% 35%, 0 35%); opacity: 1; }
+}
+
+@keyframes glitch-clip2 {
+  0%, 100% { clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%); opacity: 0; }
+  93%, 97%  { clip-path: polygon(0 65%, 100% 65%, 100% 90%, 0 90%); opacity: 1; }
+}
+
+/* ── Typewriter Cursor ── */
+.typewriter::after {
+  content: '|';
+  animation: blink-cursor 0.8s step-end infinite;
+  color: var(--cyber-blue);
+}
+
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* ── Pulse Ring ── */
+.pulse-ring {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pulse-ring::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  animation: ring-expand 2s infinite;
+  opacity: 0;
+}
+
+.pulse-ring::after {
+  content: '';
+  position: absolute;
+  inset: -16px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  animation: ring-expand 2s 0.5s infinite;
+  opacity: 0;
+}
+
+@keyframes ring-expand {
+  0%   { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* ── Number Counter Flip ── */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.count-anim { animation: countUp 0.5s ease; }
+
+/* ── Shimmer Loading ── */
+.shimmer {
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.03) 25%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ── Neon Border Pulse ── */
+.neon-border {
+  border: 1px solid var(--cyber-blue);
+  box-shadow: 0 0 8px rgba(0,217,255,0.3), inset 0 0 8px rgba(0,217,255,0.05);
+  animation: neon-pulse 3s ease-in-out infinite;
+}
+
+@keyframes neon-pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(0,217,255,0.3), inset 0 0 8px rgba(0,217,255,0.05);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0,217,255,0.6), inset 0 0 20px rgba(0,217,255,0.1);
+  }
+}
+
+/* ── Gradient Text ── */
+.gradient-text-cyber {
+  background: linear-gradient(135deg, var(--cyber-blue), var(--neon-green));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-purple {
+  background: linear-gradient(135deg, var(--purple), var(--pink));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Animated Gradient Background ── */
+.animated-gradient {
+  background: linear-gradient(-45deg, #0a0f1a, #0d1a2e, #0a1528, #0f0a1a);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ── Float Animation ── */
+.float-anim {
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+
+/* ── Rotate ── */
+.rotate-anim { animation: spin 4s linear infinite; }
+.rotate-slow  { animation: spin 20s linear infinite; }
+
+/* ── Hex Grid Background Accent ── */
+.hex-accent {
+  position: absolute;
+  width: 200px; height: 200px;
+  opacity: 0.03;
+  pointer-events: none;
+}
+
+/* ── Danger Pulse (for critical alerts) ── */
+.danger-pulse {
+  animation: dangerPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes dangerPulse {
+  0%, 100% { box-shadow: 0 0 5px rgba(255,34,68,0.2); }
+  50%       { box-shadow: 0 0 20px rgba(255,34,68,0.6), 0 0 40px rgba(255,34,68,0.2); }
+}
+
+/* ── Success Flash ── */
+.success-flash {
+  animation: successFlash 0.5s ease;
+}
+
+@keyframes successFlash {
+  0%, 100% { background: inherit; }
+  50%       { background: rgba(0,255,136,0.1); }
+}
+
+/* ── Slide animations ── */
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.slide-down { animation: slideDown 0.3s ease; }
+.slide-up   { animation: slideUp 0.3s ease; }
+
+/* ── Progress animation ── */
+.progress-animated .progress-fill {
+  animation: progressGrow 1.2s ease-out;
+}
+
+@keyframes progressGrow {
+  from { width: 0 !important; }
+}
+
+/* ── Cyber Loading Screen ── */
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-primary);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 24px;
+  transition: opacity 0.5s ease;
+}
+
+.loading-screen.hidden { opacity: 0; pointer-events: none; }
+
+.loading-logo {
+  width: 80px; height: 80px;
+  animation: float 2s ease-in-out infinite;
+}
+
+.loading-bar-wrap {
+  width: 260px;
+  height: 3px;
+  background: rgba(0,217,255,0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.loading-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyber-blue), var(--neon-green));
+  border-radius: 2px;
+  animation: loadProgress 1.5s ease-in-out;
+  box-shadow: 0 0 10px rgba(0,217,255,0.6);
+}
+
+@keyframes loadProgress {
+  0%   { width: 0; }
+  100% { width: 100%; }
+}
+
+.loading-text {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+  animation: blink-cursor 1s step-end infinite;
+}

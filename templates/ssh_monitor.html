@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page-header" data-aos="fade-down">
+  <div class="page-title"><i class="fas fa-terminal"></i><span class="font-cyber">SSH MONITORING</span></div>
+  <div class="live-indicator"><div class="live-dot"></div> WATCHING AUTH LOG</div>
+</div>
+
+<!-- Stats Row -->
+<div class="stats-grid stagger" data-aos="fade-up">
+  <div class="stat-card blue"><div class="corner-glow"></div><div class="stat-icon"><i class="fas fa-network-wired"></i></div><div class="stat-label">Total Attempts</div><div class="stat-value" id="statTotal">—</div></div>
+  <div class="stat-card red"><div class="corner-glow"></div><div class="stat-icon"><i class="fas fa-times-circle"></i></div><div class="stat-label">Failed Logins</div><div class="stat-value" id="statFailed">—</div></div>
+  <div class="stat-card green"><div class="corner-glow"></div><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div class="stat-label">Successful Logins</div><div class="stat-value" id="statSuccess">—</div></div>
+  <div class="stat-card purple"><div class="corner-glow"></div><div class="stat-icon"><i class="fas fa-user-clock"></i></div><div class="stat-label">Active Sessions</div><div class="stat-value" id="statSessions">—</div></div>
+  <div class="stat-card orange"><div class="corner-glow"></div><div class="stat-icon"><i class="fas fa-bolt"></i></div><div class="stat-label">Brute Force</div><div class="stat-value" id="statBrute">—</div></div>
+  <div class="stat-card pink"><div class="corner-glow"></div><div class="stat-icon"><i class="fas fa-user-shield"></i></div><div class="stat-label">Root Attempts</div><div class="stat-value" id="statRoot">—</div></div>
+</div>
+
+<div class="content-grid" data-aos="fade-up" data-aos-delay="100">
+
+  <!-- Active Sessions -->
+  <div class="glass-card">
+    <div class="section-header">
+      <div class="section-title"><i class="fas fa-user-clock"></i> Active SSH Sessions</div>
+      <div class="live-indicator"><div class="live-dot"></div> LIVE</div>
+    </div>
+    <div id="activeSessionsWrap">
+      <div style="text-align:center;padding:30px;color:var(--muted);"><div class="spinner-cyber" style="margin:0 auto 8px;"></div></div>
+    </div>
+  </div>
+
+  <!-- Auth Log (recent events) -->
+  <div class="glass-card">
+    <div class="section-header">
+      <div class="section-title"><i class="fas fa-file-alt"></i> Authentication Log</div>
+      <span class="fs-11" style="color:var(--muted)">Last 20 events</span>
+    </div>
+    <div class="scroll-box" style="max-height:320px;">
+      <table class="table-cyber" id="authLogTable">
+        <thead><tr><th>Time</th><th>IP</th><th>User</th><th>Status</th><th>Type</th></tr></thead>
+        <tbody id="authLogBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="content-grid" data-aos="fade-up" data-aos-delay="200">
+
+  <!-- Username targeting -->
+  <div class="glass-card">
+    <div class="section-header">
+      <div class="section-title"><i class="fas fa-crosshairs"></i> Username Targeting</div>
+    </div>
+    <div class="chart-wrap" style="height:280px;">
+      <canvas id="usernameChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Brute Force Detections -->
+  <div class="glass-card">
+    <div class="section-header">
+      <div class="section-title"><i class="fas fa-bolt"></i> Brute Force Events</div>
+    </div>
+    <div id="bruteForceWrap" class="scroll-box" style="max-height:290px;">
+      <div style="text-align:center;padding:30px;color:var(--muted);"><div class="spinner-cyber" style="margin:0 auto 8px;"></div></div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+(async () => {
+  RealtimeFeed.init('authLogTable');
+  await loadData();
+  setInterval(loadData, 10000);
+})();
+
+async function loadData() {
+  const [stats, analytics, sessions, attacks] = await Promise.all([
+    SPIDER.fetchJSON('/api/stats'),
+    SPIDER.fetchJSON('/api/analytics'),
+    SPIDER.fetchJSON('/api/sessions'),
+    SPIDER.fetchJSON('/api/attacks/latest?limit=20')
+  ]);
+
+  if (stats) {
+    SPIDER.animateCounter(document.getElementById('statTotal'),   stats.total_attempts);
+    SPIDER.animateCounter(document.getElementById('statFailed'),  stats.failed_logins);
+    SPIDER.animateCounter(document.getElementById('statSuccess'), stats.success_logins);
+    SPIDER.animateCounter(document.getElementById('statSessions'),stats.active_sessions);
+    SPIDER.animateCounter(document.getElementById('statBrute'),   stats.brute_force_attacks);
+    SPIDER.animateCounter(document.getElementById('statRoot'),    stats.root_attempts);
+  }
+
+  if (sessions) renderSessions(sessions.active || []);
+  if (attacks)  renderAuthLog(attacks);
+  if (analytics) {
+    SpiderCharts.initUsernameChart('usernameChart', analytics.top_usernames || []);
+    renderBruteForce(analytics.event_types || []);
+  }
+}
+
+function renderSessions(active) {
+  const wrap = document.getElementById('activeSessionsWrap');
+  if (!active.length) {
+    wrap.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted)"><i class="fas fa-check-circle" style="color:var(--neon-green);font-size:2rem;display:block;margin-bottom:8px;"></i>No active sessions detected</div>';
+    return;
+  }
+  wrap.innerHTML = `<table class="table-cyber"><thead><tr><th>IP</th><th>Username</th><th>Country</th><th>Duration</th><th>Status</th></tr></thead><tbody>` +
+    active.map(s => `<tr>
+      <td><span class="ip-badge">${s.ip}</span></td>
+      <td style="color:var(--white);font-family:var(--font-mono)">${s.username}</td>
+      <td>${SPIDER.flagEmoji(s.country_code)} ${s.country}</td>
+      <td style="color:var(--orange);font-family:var(--font-mono);font-size:12px">${s.duration_str}</td>
+      <td><span class="badge-cyber badge-success"><i class="fas fa-circle"></i> Active</span></td>
+    </tr>`).join('') + '</tbody></table>';
+}
+
+function renderAuthLog(items) {
+  const tbody = document.getElementById('authLogBody');
+  tbody.innerHTML = items.map(a => `<tr class="feed-row-new">
+    <td class="font-mono fs-12" style="color:var(--muted)">${a.timestamp}</td>
+    <td><span class="ip-badge">${a.ip}</span></td>
+    <td style="font-family:var(--font-mono)">${a.username}</td>
+    <td>${SPIDER.statusBadge(a.status)}</td>
+    <td>${SPIDER.eventBadge(a.event_type)}</td>
+  </tr>`).join('');
+}
+
+function renderBruteForce(types) {
+  const bf = types.find(t => t.event_type === 'brute_force');
+  const wrap = document.getElementById('bruteForceWrap');
+  const bfData = [
+    { label: 'Brute Force Attacks', count: bf?.count || 0, color: 'red', icon: 'fa-bolt' },
+    { label: 'Root Login Attempts', count: types.find(t=>t.event_type==='root_login')?.count || 0, color: 'orange', icon: 'fa-user-shield' },
+    { label: 'Invalid Users', count: types.find(t=>t.event_type==='invalid_user')?.count || 0, color: 'purple', icon: 'fa-user-times' },
+    { label: 'Failed Logins', count: types.find(t=>t.event_type==='login_failed')?.count || 0, color: 'blue', icon: 'fa-times-circle' },
+    { label: 'Successful Logins', count: types.find(t=>t.event_type==='login_success')?.count || 0, color: 'green', icon: 'fa-check-circle' },
+  ];
+  wrap.innerHTML = bfData.map(d => `
+    <div style="padding:12px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;">
+      <div class="d-flex justify-between align-center">
+        <span style="color:var(--muted);font-size:12px;"><i class="fas ${d.icon}" style="margin-right:6px;color:var(--${d.color==='blue'?'cyber-blue':d.color==='green'?'neon-green':d.color})"></i>${d.label}</span>
+        <span style="font-family:var(--font-cyber);font-size:1.1rem;color:var(--${d.color==='blue'?'cyber-blue':d.color==='green'?'neon-green':d.color})">${d.count.toLocaleString()}</span>
+      </div>
+    </div>
+  `).join('');
+}
+</script>
+{% endblock %}

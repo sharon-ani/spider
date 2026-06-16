@@ -1,0 +1,47 @@
+[Unit]
+Description=SPIDER SSH Intelligence Dashboard
+Documentation=https://github.com/sharon/spider
+After=network.target
+Wants=network-online.target
+
+[Service]
+# ─── User / Group ───────────────────────────────────────
+User=spider
+Group=spider
+
+# ─── Working Directory ──────────────────────────────────
+WorkingDirectory=/opt/spider
+
+# ─── Environment ────────────────────────────────────────
+EnvironmentFile=/opt/spider/.env
+Environment="PATH=/opt/spider/venv/bin:/usr/local/bin:/usr/bin:/bin"
+
+# ─── Start / Stop ───────────────────────────────────────
+ExecStart=/opt/spider/venv/bin/gunicorn \
+    --config gunicorn.conf.py \
+    wsgi:app
+
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s TERM $MAINPID
+
+# ─── Process Management ─────────────────────────────────
+KillMode=mixed
+TimeoutStopSec=30
+Restart=always
+RestartSec=5
+StartLimitInterval=60
+StartLimitBurst=3
+
+# ─── Security Hardening ─────────────────────────────────
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/spider /var/log/spider
+
+# Give spider user read access to SSH log
+# (add spider user to adm group: sudo usermod -aG adm spider)
+SupplementaryGroups=adm
+
+[Install]
+WantedBy=multi-user.target

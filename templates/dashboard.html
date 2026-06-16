@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- ── Page Header ── -->
+<div class="page-header" data-aos="fade-down">
+  <div class="page-title">
+    <i class="fas fa-tachometer-alt"></i>
+    <span class="font-cyber">COMMAND CENTER</span>
+  </div>
+  <div class="d-flex align-center gap-3">
+    <div class="live-indicator"><div class="live-dot"></div> MONITORING ACTIVE</div>
+    <a href="/feed" class="btn-cyber btn-cyber-outline fs-12">
+      <i class="fas fa-broadcast-tower"></i> Live Feed
+    </a>
+  </div>
+</div>
+
+<!-- ── KPI Stats Grid ── -->
+<div class="stats-grid stagger" data-aos="fade-up">
+
+  <div class="stat-card blue animate-fadeInUp">
+    <div class="corner-glow"></div>
+    <div class="stat-icon"><i class="fas fa-network-wired"></i></div>
+    <div class="stat-label">Total SSH Attempts</div>
+    <div class="stat-value" id="statTotal">—</div>
+    <div class="stat-sub"><i class="fas fa-clock" style="color:var(--cyber-blue);margin-right:4px;"></i>All time</div>
+  </div>
+
+  <div class="stat-card red animate-fadeInUp">
+    <div class="corner-glow"></div>
+    <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
+    <div class="stat-label">Failed Logins</div>
+    <div class="stat-value" id="statFailed">—</div>
+    <div class="stat-sub"><i class="fas fa-arrow-up" style="color:var(--red);margin-right:4px;"></i>All time</div>
+  </div>
+
+  <div class="stat-card green animate-fadeInUp">
+    <div class="corner-glow"></div>
+    <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+    <div class="stat-label">Successful Logins</div>
+    <div class="stat-value" id="statSuccess">—</div>
+    <div class="stat-sub"><i class="fas fa-shield-alt" style="color:var(--neon-green);margin-right:4px;"></i>Investigate</div>
+  </div>
+
+  <div class="stat-card purple animate-fadeInUp">
+    <div class="corner-glow"></div>
+    <div class="stat-icon"><i class="fas fa-user-clock"></i></div>
+    <div class="stat-label">Active Sessions</div>
+    <div class="stat-value" id="statSessions">—</div>
+    <div class="stat-sub"><i class="fas fa-circle" style="color:var(--neon-green);font-size:8px;margin-right:4px;"></i>Live now</div>
+  </div>
+
+  <div class="stat-card orange animate-fadeInUp">
+    <div class="corner-glow"></div>
+    <div class="stat-icon"><i class="fas fa-skull-crossbones"></i></div>
+    <div class="stat-label">Active Threats</div>
+    <div class="stat-value" id="statThreats">—</div>
+    <div class="stat-sub" style="color:var(--orange)">Unresolved critical</div>
+  </div>
+
+  <div class="stat-card pink animate-fadeInUp">
+    <div class="corner-glow"></div>
+    <div class="stat-icon"><i class="fas fa-bolt"></i></div>
+    <div class="stat-label">Brute Force Attacks</div>
+    <div class="stat-value" id="statBrute">—</div>
+    <div class="stat-sub"><i class="fas fa-exclamation-triangle" style="color:var(--pink);margin-right:4px;"></i>Detected</div>
+  </div>
+
+</div>
+<!-- /Stats Grid -->
+
+<!-- ── Row 2: Live Feed + Top Countries ── -->
+<div class="content-grid" data-aos="fade-up" data-aos-delay="100">
+
+  <!-- Live Attack Feed -->
+  <div class="glass-card">
+    <div class="section-header">
+      <div class="section-title">
+        <i class="fas fa-broadcast-tower"></i>
+        Live Attack Feed
+      </div>
+      <div class="live-indicator"><div class="live-dot"></div> LIVE</div>
+    </div>
+    <div class="scroll-box" style="max-height:320px;">
+      <table class="table-cyber" id="liveFeedTable">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>IP</th>
+            <th>Country</th>
+            <th>User</th>
+            <th>Status</th>
+            <th>Type</th>
+          </tr>
+        </thead>
+        <tbody id="liveFeedBody">
+          <tr><td colspan="6" class="text-center" style="padding:20px;color:var(--muted);">
+            <div class="spinner-cyber" style="margin:0 auto 8px;"></div>
+            Loading live feed...
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="mt-3 text-right">
+      <a href="/feed" class="btn-cyber btn-cyber-outline fs-12">
+        <i class="fas fa-expand-alt"></i> Full Feed
+      </a>
+    </div>
+  </div>
+
+  <!-- Top Attacking Countries -->
+  <div class="glass-card">
+    <div class="section-header">
+      <div class="section-title">
+        <i class="fas fa-globe-americas"></i>
+        Top Attacking Countries
+      </div>
+      <a href="/geo" class="btn-cyber btn-cyber-outline fs-12"><i class="fas fa-map"></i> Map</a>
+    </div>
+    <div id="topCountriesWrap">
+      <div style="text-align:center;padding:40px 0;color:var(--muted);">
+        <div class="spinner-cyber" style="margin:0 auto 8px;"></div>Loading...
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Row 3: System Health + Top IPs + Incidents ── -->
+<div class="content-grid-3" data-aos="fade-up" data-aos-delay="150">
+
+  <!-- System Health -->
+  <div class="glass-card">
+    <div class="section-header">
+      <div class="section-title"><i class="fas fa-server"></i> System Health</div>
+      <a href="/system" class="btn-cyber btn-cyber-outline fs-12"><i class="fas fa-chart-area"></i> Details</a>
+    </div>
+
+    <!-- CPU -->
+    <div class="mb-4">
+      <div class="d-flex justify-between fs-12 mb-1">
+        <span style="color:var(--muted)"><i class="fas fa-microchip" style="color:var(--cyber-blue);margin-right:5px;"></i>CPU Usage</span>
+        <span id="sysCpu" style="color:var(--cyber-blue);font-weight:600;">—</span>
+      </div>
+      <div class="progress-cyber progress-animated">
+        <div class="progress-fill blue" id="cpuBar" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- RAM -->
+    <div class="mb-4">
+      <div class="d-flex justify-between fs-12 mb-1">
+        <span style="color:var(--muted)"><i class="fas fa-memory" style="color:var(--purple);margin-right:5px;"></i>RAM Usage</span>
+        <span id="sysRam" style="color:var(--purple);font-weight:600;">—</span>
+      </div>
+      <div class="progress-cyber progress-animated">
+        <div class="progress-fill purple" id="ramBar" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- Disk -->
+    <div class="mb-4">
+      <div class="d-flex justify-between fs-12 mb-1">
+        <span style="color:var(--muted)"><i class="fas fa-hdd" style="color:var(--neon-green);margin-right:5px;"></i>Disk Usage</span>
+        <span id="sysDisk" style="color:var(--neon-green);font-weight:600;">—</span>
+      </div>
+      <div class="progress-cyber progress-animated">
+        <div class="progress-fill green" id="diskBar" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- Uptime -->
+    <div class="d-flex justify-between fs-12" style="padding:12px;background:rgba(0,217,255,0.04);border:1px solid var(--border);border-radius:var(--radius-sm);">
+      <span style="color:var(--muted)"><i class="fas fa-clock" style="color:var(--orange);margin-right:5px;"></i>Uptime</span>
+      <span id="sysUptime" style="font-family:var(--font-mono);color:var(--orange);font-weight:600;">—</span>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-wrap mt-4" style="height:130px;">
+      <canvas id="sysMiniChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Top Attacking IPs -->
+  <div class="glass-card">
+    <div class="section-header">
+      <div class="section-title"><i class="fas fa-crosshairs"></i> Top Attackers</div>
+    </div>
+    <div id="topIpsWrap">
+      <div style="text-align:center;padding:40px 0;color:var(--muted);">
+        <div class="spinner-cyber" style="margin:0 auto 8px;"></div>Loading...
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Incidents -->
+  <div class="glass-card">
+    <div class="section-header">
+      <div class="section-title"><i class="fas fa-exclamation-triangle"></i> Incidents</div>
+    </div>
+    <div id="recentIncidents" class="scroll-box" style="max-height:320px;">
+      <div style="text-align:center;padding:40px 0;color:var(--muted);">
+        <div class="spinner-cyber" style="margin:0 auto 8px;"></div>Loading...
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Row 4: Attack Chart ── -->
+<div class="glass-card" data-aos="fade-up" data-aos-delay="200">
+  <div class="section-header">
+    <div class="section-title"><i class="fas fa-chart-area"></i> Attack Timeline — Last 24 Hours</div>
+    <div class="d-flex gap-2">
+      <span style="font-size:11px;color:var(--muted);">Auto-refreshing every 30s</span>
+    </div>
+  </div>
+  <div class="chart-wrap" style="height:220px;">
+    <canvas id="attackTimelineChart"></canvas>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(async () => {
+  // Start real-time feed
+  RealtimeFeed.init('liveFeedTable');
+
+  // Load dashboard data
+  await loadDashboard();
+
+  // Refresh every 30s
+  setInterval(loadDashboard, 30000);
+})();
+
+async function loadDashboard() {
+  const [stats, analytics, sys] = await Promise.all([
+    SPIDER.fetchJSON('/api/stats'),
+    SPIDER.fetchJSON('/api/analytics'),
+    SPIDER.fetchJSON('/api/system')
+  ]);
+
+  if (stats) {
+    SPIDER.animateCounter(document.getElementById('statTotal'),   stats.total_attempts);
+    SPIDER.animateCounter(document.getElementById('statFailed'),  stats.failed_logins);
+    SPIDER.animateCounter(document.getElementById('statSuccess'), stats.success_logins);
+    SPIDER.animateCounter(document.getElementById('statSessions'),stats.active_sessions);
+    SPIDER.animateCounter(document.getElementById('statThreats'), stats.active_threats);
+    SPIDER.animateCounter(document.getElementById('statBrute'),   stats.brute_force_attacks);
+
+    // System health (from stats)
+    if (stats.system) RealtimeFeed.updateSystemStats(stats.system);
+
+    // Top Countries
+    renderTopCountries(stats.top_countries || []);
+
+    // Top IPs
+    renderTopIps(stats.top_ips || []);
+  }
+
+  // Incidents
+  const incData = await SPIDER.fetchJSON('/api/incidents?resolved=false');
+  if (incData) renderIncidents(incData.data || []);
+
+  // Attack timeline
+  if (analytics && analytics.hourly) {
+    SpiderCharts.initAttackTimeline('attackTimelineChart', analytics.hourly);
+  }
+
+  // Latest feed rows
+  const latest = await SPIDER.fetchJSON('/api/attacks/latest?limit=15');
+  if (latest) {
+    const tbody = document.getElementById('liveFeedBody');
+    tbody.innerHTML = '';
+    latest.forEach(a => RealtimeFeed.injectFeedRow(a));
+  }
+
+  // System mini chart
+  if (sys && sys.history) {
+    SpiderCharts.initSystemChart('sysMiniChart',
+      sys.history.timestamps, sys.history.cpu, sys.history.ram);
+  }
+}
+
+function renderTopCountries(countries) {
+  const wrap = document.getElementById('topCountriesWrap');
+  if (!countries.length) { wrap.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px;">No data</p>'; return; }
+  const max = countries[0].count;
+  wrap.innerHTML = countries.map((c, i) => `
+    <div class="mb-3">
+      <div class="d-flex justify-between fs-12 mb-1">
+        <span>${SPIDER.flagEmoji(c.country_code)} <span style="color:var(--white)">${c.country}</span></span>
+        <span style="color:var(--cyber-blue);font-family:var(--font-mono);font-weight:600;">${c.count.toLocaleString()}</span>
+      </div>
+      <div class="progress-cyber">
+        <div class="progress-fill blue" style="width:${(c.count/max*100).toFixed(1)}%"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderTopIps(ips) {
+  const wrap = document.getElementById('topIpsWrap');
+  if (!ips.length) { wrap.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px;">No data</p>'; return; }
+  wrap.innerHTML = `<table class="table-cyber"><thead><tr><th>#</th><th>IP Address</th><th>Country</th><th>Hits</th></tr></thead><tbody>` +
+    ips.map((ip, i) => `
+      <tr>
+        <td style="color:var(--muted);font-size:11px;">${i+1}</td>
+        <td><span class="ip-badge">${ip.ip}</span></td>
+        <td>${SPIDER.flagEmoji(ip.country_code)} ${ip.country || '—'}</td>
+        <td style="color:var(--red);font-family:var(--font-mono);font-weight:700;">${ip.count.toLocaleString()}</td>
+      </tr>
+    `).join('') + '</tbody></table>';
+}
+
+function renderIncidents(incs) {
+  const wrap = document.getElementById('recentIncidents');
+  if (!incs.length) { wrap.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px;font-size:12px;"><i class="fas fa-check-circle" style="color:var(--neon-green)"></i> No active incidents</p>'; return; }
+  wrap.innerHTML = incs.slice(0,15).map(inc => `
+    <div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+      <div class="d-flex justify-between align-center mb-1">
+        ${SPIDER.levelBadge(inc.level)}
+        <span class="fs-11" style="color:var(--muted)">${SPIDER.timeAgo(inc.timestamp)}</span>
+      </div>
+      <div class="fs-12 mt-1" style="color:var(--white)">${inc.message}</div>
+      ${inc.ip !== 'N/A' ? `<span class="ip-badge fs-11 mt-1 d-inline-block">${inc.ip}</span>` : ''}
+    </div>
+  `).join('');
+}
+</script>
+{% endblock %}

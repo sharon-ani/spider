@@ -1,0 +1,16 @@
+Flask==3.0.3
+Flask-SQLAlchemy==3.1.1
+Flask-CORS==4.0.1
+Flask-SocketIO==5.3.6
+SQLAlchemy==2.0.30
+psutil==5.9.8
+requests==2.32.3
+python-dotenv==1.0.1
+Werkzeug==3.0.3
+eventlet==0.36.1
+reportlab==4.2.2
+Pillow==10.3.0
+python-dateutil==2.9.0.post0
+colorlog==6.8.2
+watchdog==4.0.1
+gevent==24.2.1

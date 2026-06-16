@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="SPIDER — SSH Intelligence Dashboard & Honeypot Monitoring Platform by Sharon"/>
+  <meta name="theme-color" content="#0a0f1a"/>
+  <title>SPIDER | {{ title }} — SSH Intelligence Dashboard</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+
+  <!-- Icons & UI Libs -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css"/>
+
+  <!-- SPIDER CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}"/>
+
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/spider-logo.svg') }}"/>
+</head>
+<body class="animated-gradient">
+
+<!-- ── Cyber Grid Overlay ── -->
+<div class="cyber-grid-bg"></div>
+
+<!-- ── Matrix Canvas ── -->
+<canvas id="matrixCanvas"></canvas>
+
+<!-- ── tsParticles ── -->
+<div id="tsparticles"></div>
+
+<!-- ── Scan Line ── -->
+<div class="scanline"></div>
+
+<!-- ── Loading Screen ── -->
+<div id="loadingScreen" class="loading-screen">
+  <img src="{{ url_for('static', filename='img/spider-logo.svg') }}" class="loading-logo spider-logo-svg" alt="SPIDER"/>
+  <div style="font-family:'Orbitron',sans-serif;font-size:1.4rem;color:#00d9ff;letter-spacing:4px;text-shadow:0 0 20px rgba(0,217,255,0.6);">SPIDER</div>
+  <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+  <div class="loading-text">Initializing SSH Intelligence Dashboard...</div>
+</div>
+
+<!-- ── Toast Container ── -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ── App Wrapper ── -->
+<div class="app-wrapper">
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <img src="{{ url_for('static', filename='img/spider-logo.svg') }}"
+           class="sidebar-logo spider-logo-svg" alt="SPIDER Logo"/>
+      <div class="sidebar-brand-text">
+        <div class="sidebar-brand-name">SPIDER</div>
+        <div class="sidebar-brand-tag">SSH Intelligence Dashboard</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">MONITOR</div>
+
+      <a href="/" class="nav-item {% if page=='dashboard' %}active{% endif %}">
+        <i class="fas fa-tachometer-alt"></i>
+        <span class="nav-label">Dashboard</span>
+      </a>
+
+      <a href="/ssh" class="nav-item {% if page=='ssh' %}active{% endif %}">
+        <i class="fas fa-terminal"></i>
+        <span class="nav-label">SSH Monitoring</span>
+      </a>
+
+      <a href="/feed" class="nav-item {% if page=='feed' %}active{% endif %}">
+        <i class="fas fa-broadcast-tower"></i>
+        <span class="nav-label">Live Attack Feed</span>
+        <span class="nav-badge" id="navFeedBadge">●</span>
+      </a>
+
+      <div class="nav-section-label">INTELLIGENCE</div>
+
+      <a href="/geo" class="nav-item {% if page=='geo' %}active{% endif %}">
+        <i class="fas fa-globe-americas"></i>
+        <span class="nav-label">Geo Intelligence</span>
+      </a>
+
+      <a href="/system" class="nav-item {% if page=='system' %}active{% endif %}">
+        <i class="fas fa-server"></i>
+        <span class="nav-label">System Monitor</span>
+      </a>
+
+      <a href="/honeypot" class="nav-item {% if page=='honeypot' %}active{% endif %}">
+        <i class="fas fa-spider"></i>
+        <span class="nav-label">Honeypot Sessions</span>
+      </a>
+
+      <div class="nav-section-label">ANALYTICS</div>
+
+      <a href="/analytics" class="nav-item {% if page=='analytics' %}active{% endif %}">
+        <i class="fas fa-chart-line"></i>
+        <span class="nav-label">Analytics</span>
+      </a>
+
+      <a href="/reports" class="nav-item {% if page=='reports' %}active{% endif %}">
+        <i class="fas fa-file-alt"></i>
+        <span class="nav-label">Reports</span>
+      </a>
+
+      <div class="nav-section-label">SYSTEM</div>
+
+      <a href="/notifications" class="nav-item {% if page=='notifications' %}active{% endif %}">
+        <i class="fas fa-bell"></i>
+        <span class="nav-label">Notifications</span>
+      </a>
+
+      <a href="/settings" class="nav-item {% if page=='settings' %}active{% endif %}">
+        <i class="fas fa-cog"></i>
+        <span class="nav-label">Settings</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-dev-credit">
+        <i class="fas fa-heart"></i>
+        <span>Developed by Sharon &nbsp;|&nbsp; v1.0.0</span>
+      </div>
+    </div>
+  </nav>
+  <!-- ═══════════ /SIDEBAR ═══════════ -->
+
+  <!-- ═══════════ MAIN AREA ═══════════ -->
+  <div class="main-content" id="mainContent">
+
+    <!-- ── Top Header ── -->
+    <header class="top-header" id="topHeader">
+      <button class="header-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+        <i class="fas fa-bars"></i>
+      </button>
+
+      <div class="header-search">
+        <i class="fas fa-search header-search-icon"></i>
+        <input type="text" placeholder="Search IPs, usernames, countries..." id="globalSearch" autocomplete="off"/>
+      </div>
+
+      <pre class="ascii-banner" style="font-size:5.5px;line-height:1.15;">███████╗██████╗ ██╗██████╗ ███████╗██████╗
+██╔════╝██╔══██╗██║██╔══██╗██╔════╝██╔══██╗
+███████╗██████╔╝██║██║  ██║█████╗  ██████╔╝
+╚════██║██╔═══╝ ██║██║  ██║██╔══╝  ██╔══██╗
+███████║██║     ██║██████╔╝███████╗██║  ██║
+╚══════╝╚═╝     ╚═╝╚═════╝ ╚══════╝╚═╝  ╚═╝</pre>
+
+      <div class="header-right">
+        <div class="live-indicator">
+          <div class="live-dot"></div>
+          LIVE
+        </div>
+
+        <div class="header-stat green">
+          <i class="fas fa-shield-alt"></i>
+          <span id="headerThreats">—</span> threats
+        </div>
+
+        <div class="header-stat red">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span id="headerFailed">—</span> failed
+        </div>
+
+        <div class="header-time" id="headerClock">00:00:00</div>
+
+        <span style="font-size:11px;color:var(--muted);white-space:nowrap;" id="lastUpdated"></span>
+      </div>
+    </header>
+    <!-- ── /Top Header ── -->
+
+    <!-- ── Page Content ── -->
+    <main class="page-content" style="position:relative;z-index:1;">
+      {% block content %}{% endblock %}
+    </main>
+
+  </div>
+  <!-- ═══════════ /MAIN AREA ═══════════ -->
+</div>
+
+<!-- ── Scripts ── -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tsparticles@2.12.0/tsparticles.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.min.js"></script>
+
+<!-- SPIDER JS -->
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/realtime.js') }}"></script>
+
+<script>
+  // Init AOS
+  AOS.init({ duration: 600, easing: 'ease-out-cubic', once: true, offset: 40 });
+
+  // Update header stats
+  setInterval(async () => {
+    const d = await SPIDER.fetchJSON('/api/stats');
+    if (!d) return;
+    const ht = document.getElementById('headerThreats');
+    const hf = document.getElementById('headerFailed');
+    if (ht) ht.textContent = d.active_threats;
+    if (hf) hf.textContent = d.failed_logins;
+  }, 6000);
+</script>
+
+{% block scripts %}{% endblock %}
+
+</body>
+</html>

@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page-header" data-aos="fade-down">
+  <div class="page-title"><i class="fas fa-spider"></i><span class="font-cyber">HONEYPOT SESSIONS</span></div>
+  <div class="d-flex align-center gap-2">
+    <span class="badge-cyber badge-info"><i class="fas fa-shield-alt"></i> Cowrie Integration</span>
+  </div>
+</div>
+
+<!-- Stats Row -->
+<div class="stats-grid stagger" data-aos="fade-up" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+  <div class="stat-card blue"><div class="corner-glow"></div><div class="stat-icon"><i class="fas fa-terminal"></i></div><div class="stat-label">Total Sessions</div><div class="stat-value" id="hpTotal">—</div></div>
+  <div class="stat-card green"><div class="corner-glow"></div><div class="stat-icon"><i class="fas fa-key"></i></div><div class="stat-label">Successful Logins</div><div class="stat-value" id="hpSuccess">—</div></div>
+  <div class="stat-card red"><div class="corner-glow"></div><div class="stat-icon"><i class="fas fa-file-code"></i></div><div class="stat-label">Commands Captured</div><div class="stat-value" id="hpCmds">—</div></div>
+  <div class="stat-card orange"><div class="corner-glow"></div><div class="stat-icon"><i class="fas fa-download"></i></div><div class="stat-label">Download Attempts</div><div class="stat-value" id="hpDownloads">—</div></div>
+</div>
+
+<div class="content-grid" data-aos="fade-up" data-aos-delay="100">
+
+  <!-- Top Usernames -->
+  <div class="glass-card">
+    <div class="section-title mb-3"><i class="fas fa-user-secret"></i> Top Tried Credentials</div>
+    <div id="hpCredsWrap">
+      <div style="text-align:center;padding:30px;color:var(--muted);"><div class="spinner-cyber" style="margin:0 auto;"></div></div>
+    </div>
+  </div>
+
+  <!-- Session Analysis -->
+  <div class="glass-card">
+    <div class="section-title mb-3"><i class="fas fa-chart-bar"></i> Session Statistics</div>
+    <div id="hpStatsWrap">
+      <div style="text-align:center;padding:30px;color:var(--muted);"><div class="spinner-cyber" style="margin:0 auto;"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Sessions Table -->
+<div class="glass-card" data-aos="fade-up" data-aos-delay="150">
+  <div class="section-header">
+    <div class="section-title"><i class="fas fa-list-alt"></i> Honeypot Session Log</div>
+    <span class="badge-cyber badge-warning"><i class="fas fa-flask"></i> DEMO DATA</span>
+  </div>
+  <div style="overflow-x:auto;">
+    <table class="table-cyber display" id="hpTable" style="width:100%">
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>IP</th>
+          <th>Country</th>
+          <th>Username</th>
+          <th>Password</th>
+          <th>Duration</th>
+          <th>Commands</th>
+          <th>Login</th>
+        </tr>
+      </thead>
+      <tbody id="hpBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Session Detail Modal -->
+<div id="sessionModal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);">
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;min-width:500px;max-width:700px;max-height:80vh;overflow-y:auto;">
+    <div class="d-flex justify-between align-center mb-4">
+      <div class="section-title"><i class="fas fa-terminal"></i> Session Details</div>
+      <button onclick="document.getElementById('sessionModal').style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem;">&times;</button>
+    </div>
+    <div id="sessionModalBody"></div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+let hpTable = null;
+
+async function loadHoneypot() {
+  const d = await SPIDER.fetchJSON('/api/honeypot');
+  if (!d) return;
+
+  const stats = d.stats || {};
+  const sess = d.data || [];
+
+  SPIDER.animateCounter(document.getElementById('hpTotal'),    stats.total_sessions || 0);
+  SPIDER.animateCounter(document.getElementById('hpSuccess'),  stats.successful_logins || 0);
+  SPIDER.animateCounter(document.getElementById('hpCmds'),
+    sess.reduce((a,s) => a + (s.commands_count||0), 0));
+  SPIDER.animateCounter(document.getElementById('hpDownloads'),
+    sess.reduce((a,s) => a + (s.download_attempts||0), 0));
+
+  // Credentials
+  const creds = document.getElementById('hpCredsWrap');
+  if (stats.top_usernames && stats.top_passwords) {
+    creds.innerHTML = `
+      <div class="mb-3" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Top Usernames</div>
+      ${stats.top_usernames.map(u => `
+        <div style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;justify-content:space-between;">
+          <span style="font-family:var(--font-mono);color:var(--cyber-blue)">${u.username}</span>
+          <span style="color:var(--red);font-size:12px">${u.count} tries</span>
+        </div>`).join('')}
+      <div class="mb-3 mt-4" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Top Passwords</div>
+      ${stats.top_passwords.map(p => `
+        <div style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;justify-content:space-between;">
+          <span style="font-family:var(--font-mono);color:var(--pink)">${p.password}</span>
+          <span style="color:var(--red);font-size:12px">${p.count} tries</span>
+        </div>`).join('')}
+    `;
+  }
+
+  // Stats summary
+  const sw = document.getElementById('hpStatsWrap');
+  const loginRate = stats.total_sessions ? ((stats.successful_logins/stats.total_sessions)*100).toFixed(1) : '0.0';
+  sw.innerHTML = `
+    <div style="padding:12px;background:rgba(0,217,255,0.04);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;">
+      <div class="d-flex justify-between"><span style="color:var(--muted);font-size:12px">Login Success Rate</span><span style="color:var(--neon-green);font-family:var(--font-cyber)">${loginRate}%</span></div>
+      <div class="progress-cyber mt-1"><div class="progress-fill green" style="width:${loginRate}%"></div></div>
+    </div>
+    <div style="padding:12px;background:rgba(255,34,68,0.04);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;">
+      <div class="d-flex justify-between"><span style="color:var(--muted);font-size:12px">Total Sessions</span><span style="color:var(--cyber-blue);font-family:var(--font-cyber)">${stats.total_sessions||0}</span></div>
+    </div>
+    <div style="padding:12px;background:rgba(138,43,226,0.04);border:1px solid var(--border);border-radius:var(--radius-sm);">
+      <div class="d-flex justify-between"><span style="color:var(--muted);font-size:12px">Active Now</span><span style="color:var(--purple);font-family:var(--font-cyber)">${stats.active_sessions||0}</span></div>
+    </div>
+  `;
+
+  // Table
+  if (hpTable) { hpTable.destroy(); hpTable = null; }
+  document.getElementById('hpBody').innerHTML = sess.map(s => `
+    <tr style="cursor:pointer;" onclick="showSession(${JSON.stringify(s).replace(/"/g,'&quot;')})">
+      <td class="font-mono fs-12" style="color:var(--muted)">${s.timestamp}</td>
+      <td><span class="ip-badge">${s.ip}</span></td>
+      <td>${SPIDER.flagEmoji(s.country_code)} ${s.country}</td>
+      <td style="font-family:var(--font-mono);color:var(--cyber-blue)">${s.username}</td>
+      <td style="font-family:var(--font-mono);color:var(--pink)">${s.password}</td>
+      <td style="color:var(--orange);font-size:12px">${s.duration}s</td>
+      <td><span class="badge-cyber badge-info">${s.commands_count} cmds</span></td>
+      <td>${s.login_success ? '<span class="badge-cyber badge-success">✓ Success</span>' : '<span class="badge-cyber badge-failed">✗ Failed</span>'}</td>
+    </tr>
+  `).join('');
+  hpTable = $('#hpTable').DataTable({ destroy:true, pageLength:25, order:[[0,'desc']], language:{search:'',searchPlaceholder:'Filter sessions...'} });
+}
+
+function showSession(s) {
+  document.getElementById('sessionModalBody').innerHTML = `
+    <div class="d-flex gap-3" style="flex-wrap:wrap;margin-bottom:16px;">
+      <div style="flex:1;min-width:200px;"><span style="color:var(--muted);font-size:11px;">IP ADDRESS</span><div class="ip-badge mt-1">${s.ip}</div></div>
+      <div style="flex:1;min-width:200px;"><span style="color:var(--muted);font-size:11px;">COUNTRY</span><div style="color:var(--white);margin-top:4px;">${SPIDER.flagEmoji(s.country_code)} ${s.country}</div></div>
+      <div style="flex:1;min-width:200px;"><span style="color:var(--muted);font-size:11px;">CREDENTIALS</span><div style="font-family:var(--font-mono);color:var(--pink);margin-top:4px;">${s.username} / ${s.password}</div></div>
+      <div style="flex:1;min-width:200px;"><span style="color:var(--muted);font-size:11px;">DURATION</span><div style="font-family:var(--font-mono);color:var(--orange);margin-top:4px;">${s.duration}s</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Commands Executed (${s.commands_count})</div>
+    <div style="background:rgba(0,0,0,0.4);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;font-family:var(--font-mono);font-size:12px;min-height:60px;">
+      ${(s.commands||[]).length ? s.commands.map(c => `<div style="color:var(--neon-green);margin-bottom:4px;"><span style="color:var(--muted)">$ </span>${c}</div>`).join('') : '<span style="color:var(--muted)">No commands recorded</span>'}
+    </div>
+  `;
+  document.getElementById('sessionModal').style.display = 'block';
+}
+
+(async () => { await loadHoneypot(); })();
+</script>
+{% endblock %}

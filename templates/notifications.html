@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page-header" data-aos="fade-down">
+  <div class="page-title"><i class="fas fa-bell"></i><span class="font-cyber">NOTIFICATIONS</span></div>
+  <div class="d-flex align-center gap-2">
+    <button class="btn-cyber btn-cyber-green" onclick="testNotification()"><i class="fas fa-paper-plane"></i> Test Alert</button>
+  </div>
+</div>
+
+<div class="content-grid" data-aos="fade-up">
+
+  <!-- WhatsApp -->
+  <div class="glass-card">
+    <div class="section-header mb-4">
+      <div class="section-title"><i class="fab fa-whatsapp" style="color:#25D366"></i> WhatsApp Alerts</div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="waEnabled" onchange="saveChannel('whatsapp')">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Phone Number (with country code)</label>
+      <input type="text" class="input-cyber" id="waPhone" placeholder="e.g. 918281762218" value="8281762218"/>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">CallMeBot API Key</label>
+      <input type="text" class="input-cyber" id="waApiKey" placeholder="Get from CallMeBot activation"/>
+    </div>
+    <div style="padding:12px;background:rgba(37,211,102,0.06);border:1px solid rgba(37,211,102,0.2);border-radius:var(--radius-sm);margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.6;">
+      <i class="fas fa-info-circle" style="color:#25D366;margin-right:6px;"></i>
+      To activate: Send <code style="color:#25D366">I allow callmebot to send me messages</code> to <strong style="color:var(--white)">+34 644 82 49 96</strong> on WhatsApp, then get your API key.
+    </div>
+    <button class="btn-cyber btn-cyber-green w-100" onclick="saveChannel('whatsapp')">
+      <i class="fas fa-save"></i> Save WhatsApp Config
+    </button>
+  </div>
+
+  <!-- Telegram -->
+  <div class="glass-card">
+    <div class="section-header mb-4">
+      <div class="section-title"><i class="fab fa-telegram" style="color:#0088cc"></i> Telegram Alerts</div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="tgEnabled" onchange="saveChannel('telegram')">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Bot Token</label>
+      <input type="text" class="input-cyber" id="tgToken" placeholder="123456:ABC-DEF..."/>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Chat ID</label>
+      <input type="text" class="input-cyber" id="tgChatId" placeholder="-100123456789"/>
+    </div>
+    <div style="padding:12px;background:rgba(0,136,204,0.06);border:1px solid rgba(0,136,204,0.2);border-radius:var(--radius-sm);margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.6;">
+      <i class="fas fa-info-circle" style="color:#0088cc;margin-right:6px;"></i>
+      Create a bot via <strong style="color:var(--white)">@BotFather</strong>. Get your chat ID by messaging <strong style="color:var(--white)">@userinfobot</strong>.
+    </div>
+    <button class="btn-cyber btn-cyber-primary w-100" onclick="saveChannel('telegram')">
+      <i class="fas fa-save"></i> Save Telegram Config
+    </button>
+  </div>
+</div>
+
+<!-- Trigger Conditions -->
+<div class="glass-card" data-aos="fade-up" data-aos-delay="100">
+  <div class="section-title mb-4"><i class="fas fa-sliders-h"></i> Alert Trigger Conditions</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;">
+    {% set triggers = [
+      ('on_failed_login',   'Failed Login Detected',   'fa-times-circle', 'red',   'Trigger on every failed SSH login attempt'),
+      ('on_success_login',  'Successful Login',        'fa-check-circle', 'green', 'Alert when any login succeeds'),
+      ('on_root_login',     'Root Login Attempt',      'fa-user-shield',  'purple','Alert on root username attempts'),
+      ('on_brute_force',    'Brute Force Attack',      'fa-bolt',         'orange','Alert when brute-force threshold exceeded'),
+      ('on_new_country',    'New Country Detected',    'fa-globe',        'blue',  'First time seeing a new attacking country'),
+      ('on_critical',       'Critical Incident',       'fa-skull',        'red',   'Any CRITICAL level incident created'),
+    ] %}
+    {% for key, label, icon, color, desc in triggers %}
+    <div style="padding:14px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius);">
+      <div class="d-flex justify-between align-center mb-2">
+        <div class="d-flex align-center gap-2">
+          <i class="fas {{ icon }}" style="color:var(--{{ 'neon-green' if color=='green' else 'cyber-blue' if color=='blue' else color }});"></i>
+          <span style="font-size:13px;font-weight:600;color:var(--white);">{{ label }}</span>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" class="trigger-toggle" data-trigger="{{ key }}" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div style="font-size:11px;color:var(--muted);">{{ desc }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Recent Notification Log -->
+<div class="glass-card mt-4" data-aos="fade-up" data-aos-delay="150">
+  <div class="section-title mb-3"><i class="fas fa-history"></i> Recent Notifications Sent</div>
+  <div id="notifLog">
+    <div style="text-align:center;padding:30px;color:var(--muted);">
+      <div class="spinner-cyber" style="margin:0 auto 10px;"></div>Loading...
+    </div>
+  </div>
+</div>
+
+<!-- Test Notification Modal -->
+<div id="testModal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);">
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;min-width:420px;max-width:520px;">
+    <div class="d-flex justify-between align-center mb-4">
+      <div class="section-title"><i class="fas fa-paper-plane"></i> Test Alert</div>
+      <button onclick="document.getElementById('testModal').style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem;">&times;</button>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">This will send a test SPIDER alert to all enabled channels. The message will look like:</p>
+    <pre style="background:rgba(0,0,0,0.4);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;font-size:11px;color:var(--neon-green);font-family:var(--font-mono);line-height:1.6;">🕷️ SPIDER ALERT
+
+Type: Test Alert
+
+IP: 203.0.113.10
+Country: Germany
+Username: root
+
+Timestamp: {{ now }}
+
+— SPIDER SSH Intelligence Dashboard</pre>
+    <div class="d-flex gap-2 mt-4">
+      <button class="btn-cyber btn-cyber-green w-100" onclick="sendTestAlert()"><i class="fas fa-paper-plane"></i> Send Test Now</button>
+      <button class="btn-cyber btn-cyber-outline" onclick="document.getElementById('testModal').style.display='none'">Cancel</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+async function loadConfig() {
+  const cfgs = await SPIDER.fetchJSON('/api/notifications/config');
+  if (!cfgs) return;
+
+  cfgs.forEach(cfg => {
+    if (cfg.channel === 'whatsapp') {
+      document.getElementById('waEnabled').checked = cfg.enabled;
+      if (cfg.target) document.getElementById('waPhone').value = cfg.target;
+      if (cfg.api_key) document.getElementById('waApiKey').value = cfg.api_key;
+    }
+    if (cfg.channel === 'telegram') {
+      document.getElementById('tgEnabled').checked = cfg.enabled;
+      if (cfg.target) document.getElementById('tgToken').value = cfg.target;
+      if (cfg.api_key) document.getElementById('tgChatId').value = cfg.api_key;
+    }
+  });
+}
+
+async function saveChannel(channel) {
+  let data = { channel };
+  if (channel === 'whatsapp') {
+    data.enabled  = document.getElementById('waEnabled').checked;
+    data.target   = document.getElementById('waPhone').value;
+    data.api_key  = document.getElementById('waApiKey').value;
+  } else if (channel === 'telegram') {
+    data.enabled  = document.getElementById('tgEnabled').checked;
+    data.target   = document.getElementById('tgToken').value;
+    data.api_key  = document.getElementById('tgChatId').value;
+  }
+
+  // Gather triggers
+  document.querySelectorAll('.trigger-toggle').forEach(t => {
+    data[t.dataset.trigger] = t.checked;
+  });
+
+  const r = await fetch('/api/notifications/config', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(data)
+  });
+  const res = await r.json();
+  if (res.success) SPIDER.toast('Saved', `${channel} configuration saved`, 'success');
+  else SPIDER.toast('Error', 'Failed to save configuration', 'critical');
+}
+
+function testNotification() {
+  document.getElementById('testModal').style.display = 'block';
+}
+
+async function sendTestAlert() {
+  SPIDER.toast('Test Alert', 'Sending to all enabled channels...', 'info');
+  document.getElementById('testModal').style.display = 'none';
+  
+  try {
+    const r = await fetch('/api/notifications/test', { method: 'POST' });
+    const res = await r.json();
+    if (res.success) {
+      SPIDER.toast('Test Alert', res.message, 'success');
+    } else {
+      SPIDER.toast('Test Alert', res.message || 'Failed to send test alert', 'critical');
+    }
+  } catch (e) {
+    SPIDER.toast('Test Alert', 'Connection error while testing notifications', 'critical');
+  }
+}
+
+// Load notification log
+async function loadNotifLog() {
+  const incs = await SPIDER.fetchJSON('/api/incidents?level=CRITICAL');
+  const wrap = document.getElementById('notifLog');
+  if (!incs || !incs.data?.length) {
+    wrap.innerHTML = '<p style="text-align:center;color:var(--muted);padding:20px;font-size:12px;"><i class="fas fa-check-circle" style="color:var(--neon-green)"></i> No critical alerts sent yet</p>';
+    return;
+  }
+  const notified = incs.data.filter(i => i.level === 'CRITICAL').slice(0, 10);
+  wrap.innerHTML = notified.map(i => `
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+      <i class="fas fa-bell" style="color:var(--red);margin-top:2px;flex-shrink:0;"></i>
+      <div style="flex:1;">
+        <div style="font-size:12px;color:var(--white);">${i.message}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">${SPIDER.timeAgo(i.timestamp)} &nbsp;•&nbsp; ${SPIDER.flagEmoji('XX')} ${i.country || 'Unknown'}</div>
+      </div>
+      ${SPIDER.levelBadge(i.level)}
+    </div>
+  `).join('');
+}
+
+(async () => { await Promise.all([loadConfig(), loadNotifLog()]); })();
+</script>
+{% endblock %}

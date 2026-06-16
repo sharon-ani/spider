@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page-header" data-aos="fade-down">
+  <div class="page-title"><i class="fas fa-cog"></i><span class="font-cyber">SETTINGS</span></div>
+  <div class="d-flex align-center gap-2">
+    <button class="btn-cyber btn-cyber-green" onclick="saveAllSettings()"><i class="fas fa-save"></i> Save All</button>
+  </div>
+</div>
+
+<div class="content-grid" data-aos="fade-up">
+
+  <!-- SSH Monitor Settings -->
+  <div class="glass-card">
+    <div class="section-title mb-4"><i class="fas fa-terminal"></i> SSH Monitor Settings</div>
+
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">SSH Log Path (Linux)</label>
+      <input type="text" class="input-cyber" id="sshLogPath" value="/var/log/auth.log"/>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;">Cowrie: /home/cowrie/cowrie/var/log/cowrie/cowrie.json</div>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Brute Force Threshold (attempts)</label>
+      <input type="number" class="input-cyber" id="bfThreshold" value="10" min="3" max="100"/>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Brute Force Detection Window (seconds)</label>
+      <input type="number" class="input-cyber" id="bfWindow" value="60" min="10" max="3600"/>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <div class="d-flex justify-between align-center">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--white);">Demo Mode</div>
+          <div style="font-size:11px;color:var(--muted);">Use simulated attack data (Windows/dev)</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="demoMode" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard Settings -->
+  <div class="glass-card">
+    <div class="section-title mb-4"><i class="fas fa-sliders-h"></i> Dashboard Settings</div>
+
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Auto-Refresh Interval (ms)</label>
+      <select class="input-cyber" id="refreshInterval">
+        <option value="3000">3 seconds</option>
+        <option value="5000" selected>5 seconds</option>
+        <option value="10000">10 seconds</option>
+        <option value="30000">30 seconds</option>
+        <option value="60000">1 minute</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Max Feed Rows</label>
+      <input type="number" class="input-cyber" id="maxFeedRows" value="100" min="20" max="500"/>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Theme</label>
+      <select class="input-cyber" id="theme">
+        <option value="dark" selected>Dark (Cyberpunk)</option>
+        <option value="light" disabled>Light Mode (Coming Soon)</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- System Info -->
+<div class="glass-card mt-0" data-aos="fade-up" data-aos-delay="100">
+  <div class="section-title mb-4"><i class="fas fa-info-circle"></i> About SPIDER</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;">
+    {% set info = [
+      ('Application', 'SPIDER v1.0.0', 'fa-spider', 'cyber-blue'),
+      ('Tagline', 'SSH Intelligence Dashboard', 'fa-terminal', 'neon-green'),
+      ('Developer', 'Sharon', 'fa-user-shield', 'purple'),
+      ('License', 'MIT — Open Source', 'fa-file-contract', 'orange'),
+      ('Backend', 'Python Flask + SQLAlchemy', 'fa-python', 'pink'),
+      ('Database', 'SQLite (PostgreSQL ready)', 'fa-database', 'blue'),
+      ('GeoIP', 'ip-api.com (Free tier)', 'fa-globe', 'neon-green'),
+      ('Notifications', 'CallMeBot / Telegram Bot', 'fa-bell', 'orange'),
+    ] %}
+    {% for label, val, icon, color in info %}
+    <div style="padding:12px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm);">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:4px;"><i class="fas {{ icon }}" style="color:var(--{{ 'cyber-blue' if color=='blue' else color }});margin-right:5px;"></i>{{ label }}</div>
+      <div style="font-size:12px;color:var(--white);font-weight:600;">{{ val }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Danger Zone -->
+<div class="glass-card mt-4" data-aos="fade-up" data-aos-delay="150" style="border-color:rgba(255,34,68,0.2);">
+  <div class="section-title mb-4" style="color:var(--red);"><i class="fas fa-exclamation-triangle"></i> Danger Zone</div>
+  <div class="d-flex gap-3" style="flex-wrap:wrap;">
+    <button class="btn-cyber btn-cyber-danger" onclick="if(confirm('Reset all demo data? This cannot be undone.')) resetDemoData()">
+      <i class="fas fa-trash"></i> Reset Demo Data
+    </button>
+    <button class="btn-cyber" style="background:rgba(255,255,255,0.05);color:var(--muted);" disabled>
+      <i class="fas fa-database"></i> Export Database Backup
+    </button>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+async function loadSettings() {
+  const s = await SPIDER.fetchJSON('/api/settings');
+  if (!s) return;
+  if (s.ssh_log_path)      document.getElementById('sshLogPath').value = s.ssh_log_path;
+  if (s.brute_force_threshold) document.getElementById('bfThreshold').value = s.brute_force_threshold;
+  if (s.brute_force_window)    document.getElementById('bfWindow').value = s.brute_force_window;
+  if (s.demo_mode !== undefined) document.getElementById('demoMode').checked = s.demo_mode === 'true';
+  if (s.refresh_interval)  document.getElementById('refreshInterval').value = s.refresh_interval;
+  if (s.max_feed_rows)     document.getElementById('maxFeedRows').value = s.max_feed_rows;
+}
+
+async function saveAllSettings() {
+  const data = {
+    ssh_log_path:            document.getElementById('sshLogPath').value,
+    brute_force_threshold:   document.getElementById('bfThreshold').value,
+    brute_force_window:      document.getElementById('bfWindow').value,
+    demo_mode:               String(document.getElementById('demoMode').checked),
+    refresh_interval:        document.getElementById('refreshInterval').value,
+    max_feed_rows:           document.getElementById('maxFeedRows').value,
+    theme:                   document.getElementById('theme').value,
+  };
+  const r = await fetch('/api/settings', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)
+  });
+  const res = await r.json();
+  if (res.success) SPIDER.toast('Settings Saved', 'All settings updated successfully', 'success');
+  else SPIDER.toast('Error', 'Failed to save settings', 'critical');
+}
+
+async function resetDemoData() {
+  SPIDER.toast('Resetting...', 'Demo data is being cleared', 'warning');
+}
+
+(async () => { await loadSettings(); })();
+</script>
+{% endblock %}
